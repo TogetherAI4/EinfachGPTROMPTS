@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Mistral 7B</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <nav>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/prompts">Prompts</a></li>
+                <li><a href="/markdown">Markdown Dateien</a></li>
+                <li><a href="/chat">Chat</a></li>
+            </ul>
+        </nav>
+    </header>
+    <div class="container">
+        <h1>Chat with Mistral 7B</h1>
+        <div id="chat-output" class="chat-window"></div>
+        <form id="chat-form" class="chat-form">
+            <input type="text" id="chat-input" placeholder="Type your message..." required>
+            <button type="submit">Send</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function() {
+            $('#chat-form').submit(function(e) {
+                e.preventDefault();
+
+                const userInput = $('#chat-input').val().trim();
+                if (userInput === '') return;  // Verhindert leere Eingaben
+
+                // Benutzer-Eingabe hinzufügen
+                $('#chat-output').append(`<p><strong>You:</strong> ${userInput}</p>`);
+                scrollToBottom();
+
+                // Ladeindikator anzeigen
+                $('#chat-output').append('<p><em>Bot is typing...</em></p>');
+                scrollToBottom();
+
+                // AJAX-Request an das Backend
+                $.ajax({
+                    url: '/ask',
+                    method: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify({ input: userInput }),
+                    success: function(response) {
+                        // Ladeindikator entfernen
+                        $('#chat-output').find('p:contains("Bot is typing...")').remove();
+
+                        // Antwort vom Bot hinzufügen
+                        $('#chat-output').append(`<p><strong>Bot:</strong> ${response.response}</p>`);
+                        scrollToBottom();
+                    },
+                    error: function() {
+                        // Ladeindikator entfernen
+                        $('#chat-output').find('p:contains("Bot is typing...")').remove();
+
+                        // Fehlermeldung anzeigen
+                        $('#chat-output').append('<p><strong>Bot:</strong> Sorry, something went wrong. Please try again.</p>');
+                        scrollToBottom();
+                    }
+                });
+
+                // Eingabefeld leeren
+                $('#chat-input').val('');
+            });
+
+            // Funktion zum automatischen Scrollen
+            function scrollToBottom() {
+                const chatOutput = $('#chat-output');
+                chatOutput.scrollTop(chatOutput[0].scrollHeight);
+            }
+        });
+    </script>
+</body>
+</html>
